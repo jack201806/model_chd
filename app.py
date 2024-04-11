@@ -22,7 +22,7 @@ from libreco.evaluation import evaluate
 
 data_info = DataInfo.load("model_path", model_name="svdpp_model")
 model = SVDpp.load(
-        path="model_path", model_name="svdpp_model", data_info=data_info, manual=True
+        path=dir_path+"/model_path", model_name="svdpp_model", data_info=data_info, manual=True
     )
 
 # Functions
