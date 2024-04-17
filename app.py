@@ -1,4 +1,4 @@
-# Below code is needed for Huggingface
+# Huggingface code
 
 import pathlib
 import os
@@ -22,8 +22,10 @@ from libreco.data import random_split, DatasetPure, DataInfo
 from libreco.algorithms import LightGCN, UserCF, ItemCF, SVD, SVDpp, NCF, NGCF, ALS, BPR
 from libreco.evaluation import evaluate
 
-
 # Models
+
+item_title_mapping = pd.read_csv("item_title_mapping.csv")
+id_to_title = dict(zip(item_title_mapping['item'], item_title_mapping['title']))
 
 model_paths = {
     'bpr': './model_path_pure/bpr',
@@ -57,10 +59,13 @@ def recommend(userId, amount, modelName):
     model_used = model_classes[modelName]
 
     data_info = DataInfo.load(model_path, model_name=modelName+"_model")
-    model = model_used.load(path=model_path, model_name=modelName+"_model", data_info=data_info, manual=True)
+    model = model_used.load(path=model_path, model_name=modelName+"_model", data_info=data_info)
+
     recommendations = model.recommend_user(user=userId, n_rec=amount)
-    recommended_items = "\n".join(map(str, recommendations[1]))
-    return recommended_items
+    recommended_titles = [id_to_title[item_id] for item_id in recommendations[1]]
+    recommended_titles_str = "\n".join(str(title) for title in recommended_titles)
+
+    return recommended_titles_str
 
 with gr.Blocks() as interfaces:
     with gr.Row():
