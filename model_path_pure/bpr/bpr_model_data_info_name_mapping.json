@@ -1,0 +1,24 @@
+{
+    "sparse_col":{
+        "sex":0,
+        "occupation":1,
+        "genre1":2,
+        "genre2":3,
+        "genre3":4
+    },
+    "dense_col":{
+        "age":0
+    },
+    "user_sparse_col":{
+        "sex":0,
+        "occupation":1
+    },
+    "user_dense_col":{
+        "age":0
+    },
+    "item_sparse_col":{
+        "genre1":2,
+        "genre2":3,
+        "genre3":4
+    }
+}
