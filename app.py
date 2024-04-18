@@ -18,10 +18,6 @@ import gradio as gr
 from libreco.data import DataInfo
 from libreco.algorithms import LightGCN, SVD, SVDpp, NGCF, BPR, DeepWalk
 
-# Dictionary for mapping
-item_title_mapping = pd.read_csv("item_title_mapping.csv")
-id_to_title = dict(zip(item_title_mapping['item'], item_title_mapping['title']))
-
 # Models
 
 model_paths_rating = {
@@ -88,7 +84,7 @@ def recommend(userId, amount, modelName):
     model = model_used.load(path=model_path, model_name=modelName+"_model", data_info=data_info)
 
     recommendations = model.recommend_user(user=userId, n_rec=amount)
-    recommended_titles = [f"{i+1}. {id_to_title[item_id]}" for i, item_id in enumerate(recommendations[1])]
+    recommended_titles = [f"{i+1}. {id_to_title[item_id]}" for i, item_id in enumerate(recommendations[userId])]
     recommended_titles_str = "\n".join(recommended_titles)
 
     return recommended_titles_str
