@@ -1,0 +1,12 @@
+{
+    "task":"ranking",
+    "embed_size":16,
+    "norm_embed":false,
+    "n_walks":10,
+    "walk_length":10,
+    "window_size":5,
+    "n_epochs":3,
+    "n_threads":0,
+    "seed":42,
+    "lower_upper_bound":null
+}

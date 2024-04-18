@@ -2,9 +2,10 @@
     "sparse_col":{
         "sex":0,
         "occupation":1,
-        "genre1":2,
-        "genre2":3,
-        "genre3":4
+        "title":2,
+        "genre1":3,
+        "genre2":4,
+        "genre3":5
     },
     "dense_col":{
         "age":0
@@ -17,8 +18,9 @@
         "age":0
     },
     "item_sparse_col":{
-        "genre1":2,
-        "genre2":3,
-        "genre3":4
+        "title":2,
+        "genre1":3,
+        "genre2":4,
+        "genre3":5
     }
 }

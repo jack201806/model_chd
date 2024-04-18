@@ -13,30 +13,37 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 # Imports
 
 import pandas as pd
-import numpy as np
-import scipy as sp
-import tensorflow as tf
 import gradio as gr
 
-from libreco.data import random_split, DatasetPure, DataInfo
-from libreco.algorithms import LightGCN, UserCF, ItemCF, SVD, SVDpp, NCF, NGCF, ALS, BPR
-from libreco.evaluation import evaluate
+from libreco.data import DataInfo
+from libreco.algorithms import LightGCN, SVD, SVDpp, NGCF, BPR, DeepWalk
 
-# Models
-
+# Dictionary for mapping
 item_title_mapping = pd.read_csv("item_title_mapping.csv")
 id_to_title = dict(zip(item_title_mapping['item'], item_title_mapping['title']))
 
+# Models
+
 model_paths = {
-    'bpr': './model_path_pure/bpr',
-    'svdpp': './model_path_pure/svdpp',
-    # extra models paths
+    'bpr': './model_path_pure/bpr', # Bayesian Personalized Ranking
+    'svd_rating': './model_path_pure/svd_rating', # Singular Value Decomposition - RATING
+    'svd_ranking': './model_path_pure/svd_ranking', # Singular Value Decomposition - RANKING
+    'svdpp_rating': './model_path_pure/svdpp_rating', # Singular Value Decomposition but includes implicit feedback data - RATING
+    'svdpp_ranking': './model_path_pure/svdpp_ranking', # Singular Value Decomposition but includes implicit feedback data - RANKING
+    'ngcf': './model_path_pure/ngcf', # Neural Graph Collaborative Filtering
+    'lightgcn': './model_path_pure/lightgcn', # Simplified, more scalable version of NGCF
+    'deepwalk': './model_path_pure/deepwalk'
 }
 
 model_classes = {
     'bpr': BPR,
-    'svdpp': SVDpp,
-    # extra models
+    'svd_rating': SVD,
+    'svd_ranking': SVD,
+    'svdpp_rating': SVDpp,
+    'svdpp_ranking': SVDpp,
+    'ngcf': NGCF,
+    'lightgcn': LightGCN,
+    'deepwalk': DeepWalk
 }
 
 def predict(userId, movieId, modelName):
