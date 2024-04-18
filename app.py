@@ -24,11 +24,14 @@ id_to_title = dict(zip(item_title_mapping['item'], item_title_mapping['title']))
 
 # Models
 
-model_paths = {
-    'bpr': './model_path_pure/bpr', # Bayesian Personalized Ranking
+model_paths_rating = {
     'svd_rating': './model_path_pure/svd_rating', # Singular Value Decomposition - RATING
+    'svdpp_rating': './model_path_pure/svdpp_rating' # Singular Value Decomposition but includes implicit feedback data - RATING
+}
+
+model_paths_ranking = {
+    'bpr': './model_path_pure/bpr', # Bayesian Personalized Ranking
     'svd_ranking': './model_path_pure/svd_ranking', # Singular Value Decomposition - RANKING
-    'svdpp_rating': './model_path_pure/svdpp_rating', # Singular Value Decomposition but includes implicit feedback data - RATING
     'svdpp_ranking': './model_path_pure/svdpp_ranking', # Singular Value Decomposition but includes implicit feedback data - RANKING
     'ngcf': './model_path_pure/ngcf', # Neural Graph Collaborative Filtering
     'lightgcn': './model_path_pure/lightgcn', # Simplified, more scalable version of NGCF
@@ -46,50 +49,75 @@ model_classes = {
     'deepwalk': DeepWalk
 }
 
+# Dictionary for mapping
+
+item_title_mapping = pd.read_csv("item_title_mapping.csv")
+id_to_title = dict(zip(item_title_mapping['item'], item_title_mapping['title']))
+
+# Functions
+
 def predict(userId, movieId, modelName):
-    if modelName not in model_paths:
+    if modelName not in model_paths_rating:
         raise ValueError("Invalid model name")
 
-    model_path = model_paths[modelName]
+    model_path = model_paths_rating[modelName]
     model_used = model_classes[modelName]
 
     data_info = DataInfo.load(model_path, model_name=modelName+"_model")
     model = model_used.load(path=model_path, model_name=modelName+"_model", data_info=data_info, manual=True)
     prediction = model.predict(user=userId, item=movieId)
+
     return f"{prediction[0]:.1f}"
 
-def recommend(userId, amount, modelName):
-    if modelName not in model_paths:
+def predict_by_title(userId, movieTitle, modelName):
+    if modelName not in model_paths_rating:
         raise ValueError("Invalid model name")
 
-    model_path = model_paths[modelName]
+    movieId = item_title_mapping[item_title_mapping['title'] == movieTitle]['item'].values[0]
+
+    return predict(userId, movieId, modelName)
+
+def recommend(userId, amount, modelName):
+    if modelName not in model_paths_ranking:
+        raise ValueError("Invalid model name")
+
+    model_path = model_paths_ranking[modelName]
     model_used = model_classes[modelName]
 
     data_info = DataInfo.load(model_path, model_name=modelName+"_model")
     model = model_used.load(path=model_path, model_name=modelName+"_model", data_info=data_info)
 
     recommendations = model.recommend_user(user=userId, n_rec=amount)
-    recommended_titles = [id_to_title[item_id] for item_id in recommendations[1]]
-    recommended_titles_str = "\n".join(str(title) for title in recommended_titles)
+    recommended_titles = [f"{i+1}. {id_to_title[item_id]}" for i, item_id in enumerate(recommendations[1])]
+    recommended_titles_str = "\n".join(recommended_titles)
 
     return recommended_titles_str
 
-with gr.Blocks() as interfaces:
-    with gr.Row():
-        model_selection = gr.Dropdown(list(model_paths.keys()), label="Select Model")
-    with gr.Row():
-        with gr.Column():
-            input_userId = gr.Number(label="User ID")
-            input_movieId = gr.Number(label="Movie ID")
-            input_recommendations = gr.Number(label="How many recommendations?")
-        output_pred = gr.Text(label="Predicted rating:")
-        output_rec = gr.Text(label="Recommended items:")
+# Gradio interface
 
-    btn_predict = gr.Button(value="Predict", visible=True)
-    btn_predict.click(predict, inputs=[input_userId, input_movieId, model_selection], outputs=[output_pred])
+with gr.Blocks() as interface:
+    with gr.Tabs() as tab:
+        with gr.Tab(label="Predictions"):
+            with gr.Row():
+                model_selection_pred = gr.Dropdown(list(model_paths_rating.keys()), label="Select Model for Predictions")
+            with gr.Row():
+                with gr.Column():
+                    input_userId_pred = gr.Number(label="User ID", info="Type in the id of the user, e.g. 1")
+                    input_movieTitle_pred = gr.Dropdown(choices=item_title_mapping['title'].tolist(), label="Movie Title", filterable=True, info="Start typing a movie title here or select one from the menu.")
+                output_pred = gr.Text(label="Predicted rating:", info="This is the predicted rating that the chosen user would give to a movie.")
+            btn_predict = gr.Button(value="Predict", visible=True)
+            btn_predict.click(predict_by_title, inputs=[input_userId_pred, input_movieTitle_pred, model_selection_pred], outputs=[output_pred])
 
-    btn_recommend = gr.Button(value="Recommend", visible=True)
-    btn_recommend.click(recommend, inputs=[input_userId, input_recommendations, model_selection], outputs=[output_rec])
+        with gr.Tab(label="Recommendations"):
+            with gr.Row():
+                model_selection_rec = gr.Dropdown(list(model_paths_ranking.keys()), label="Select Model for Recommendations")
+            with gr.Row():
+                with gr.Column():
+                    input_userId_rec = gr.Number(label="User ID", info="Type in the id of the user, e.g. 1")
+                    input_recommendations_rec = gr.Number(label="How many recommendations?", info="How many movies do you want listed as possible recommendations for the chosen user?")
+                output_rec = gr.Text(label="Recommended movies:", info="Here are the top movie recommendations for the chosen user, ranked accordingly")
+            btn_recommend = gr.Button(value="Recommend", visible=True)
+            btn_recommend.click(recommend, inputs=[input_userId_rec, input_recommendations_rec, model_selection_rec], outputs=[output_rec])
 
 if __name__ == "__main__":
-    interfaces.launch() # share=True, auth=("1", "1")
+    interface.launch() # share=True, auth=("1", "1")
