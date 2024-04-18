@@ -52,17 +52,20 @@ id_to_title = dict(zip(item_title_mapping['item'], item_title_mapping['title']))
 
 # Functions
 
-def predict(userId, movieId, modelName):
+data_info_rating = {} # global variables as dict to store data info and rating models --> code should work faster now
+models_rating = {}
+
+def load_rating_model(modelName):
     if modelName not in model_paths_rating:
         raise ValueError("Invalid model name")
+    if modelName not in data_info_rating:
+        data_info_rating[modelName] = DataInfo.load(model_paths_rating[modelName], model_name=modelName+"_model")
+        models_rating[modelName] = model_classes[modelName].load(path=model_paths_rating[modelName], model_name=modelName+"_model", data_info=data_info_rating[modelName], manual=True)
 
-    model_path = model_paths_rating[modelName]
-    model_used = model_classes[modelName]
-
-    data_info = DataInfo.load(model_path, model_name=modelName+"_model")
-    model = model_used.load(path=model_path, model_name=modelName+"_model", data_info=data_info, manual=True)
+def predict(userId, movieId, modelName):
+    load_rating_model(modelName)
+    model = models_rating[modelName]
     prediction = model.predict(user=userId, item=movieId)
-
     return f"{prediction[0]:.1f}"
 
 def predict_by_title(userId, movieTitle, modelName):
@@ -73,15 +76,19 @@ def predict_by_title(userId, movieTitle, modelName):
 
     return predict(userId, movieId, modelName)
 
-def recommend(userId, amount, modelName):
+data_info_ranking = {}  # global variables as dict to store data info and ranking models --> code should work faster now
+models_ranking = {}
+
+def load_ranking_model(modelName):
     if modelName not in model_paths_ranking:
         raise ValueError("Invalid model name")
+    if modelName not in data_info_ranking:
+        data_info_ranking[modelName] = DataInfo.load(model_paths_ranking[modelName], model_name=modelName+"_model")
+        models_ranking[modelName] = model_classes[modelName].load(path=model_paths_ranking[modelName], model_name=modelName+"_model", data_info=data_info_ranking[modelName])
 
-    model_path = model_paths_ranking[modelName]
-    model_used = model_classes[modelName]
-
-    data_info = DataInfo.load(model_path, model_name=modelName+"_model")
-    model = model_used.load(path=model_path, model_name=modelName+"_model", data_info=data_info)
+def recommend(userId, amount, modelName):
+    load_ranking_model(modelName)
+    model = models_ranking[modelName]
 
     recommendations = model.recommend_user(user=userId, n_rec=amount)
     recommended_titles = [f"{i+1}. {id_to_title[item_id]}" for i, item_id in enumerate(recommendations[userId])]
